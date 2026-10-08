@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+
+  <title>Rimon EasyCalc</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont,
+        "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .calculator-wrap {
+      width: 100%;
+      min-height: 100vh;
+      background: #000;
+      padding:
+        max(18px, env(safe-area-inset-top))
+        16px
+        28px
+        16px;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* TOP BAR */
+
+    .topbar {
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2px;
+    }
+
+    .top-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 1px solid #292929;
+      background: #171717;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .history-icon {
+      width: 23px;
+      height: 23px;
+      border: 3px solid #eee;
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .history-icon:before {
+      content: "";
+      position: absolute;
+      width: 2px;
+      height: 8px;
+      background: #eee;
+      left: 9px;
+      top: 3px;
+      border-radius: 2px;
+    }
+
+    .history-icon:after {
+      content: "";
+      position: absolute;
+      width: 7px;
+      height: 2px;
+      background: #eee;
+      left: 9px;
+      top: 10px;
+      transform: rotate(20deg);
+      border-radius: 2px;
+    }
+
+    .calc-icon {
+      width: 25px;
+      height: 28px;
+      border: 3px solid #eee;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .calc-icon:before {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 4px;
+      width: 11px;
+      height: 5px;
+      border: 2px solid #eee;
+      border-radius: 1px;
+    }
+
+    .calc-icon:after {
+      content: "••••••••";
+      position: absolute;
+      left: 2px;
+      top: 10px;
+      width: 18px;
+      line-height: 7px;
+      letter-spacing: 1px;
+      font-size: 12px;
+      color: #eee;
+      overflow: hidden;
+    }
+
+    /* DISPLAY */
+
+    .display {
+      height: clamp(270px, 42vh, 500px);
+      min-height: 260px;
+
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+
+      padding: 0 8px 22px;
+      overflow: hidden;
+    }
+
+    #expression {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #display {
+      width: 100%;
+      text-align: right;
+
+      font-size: clamp(72px, 15vw, 118px);
+      line-height: 1;
+      font-weight: 300;
+
+      letter-spacing: -2px;
+      color: #f5f5f7;
+
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    /* BUTTONS */
+
+    .keys {
+      width: 100%;
+
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+
+      gap: clamp(10px, 2.2vw, 15px);
+    }
+
+    button.key {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+
+      border: 0;
+      border-radius: 50%;
+
+      font-family: inherit;
+
+      font-size: clamp(31px, 7vw, 48px);
+      font-weight: 300;
+
+      color: #fff;
+
+      cursor: pointer;
+      user-select: none;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      transition: filter .08s ease, transform .05s ease;
+    }
+
+    button.key:active {
+      filter: brightness(1.45);
+      transform: scale(.97);
+    }
+
+    .number-key {
+      background: #333333;
+    }
+
+    .function-key {
+      background: #a5a5a5;
+      color: #111 !important;
+    }
+
+    .operator-key {
+      background: #ff9500;
+      color: #fff;
+    }
+
+    .operator-key.active {
+      background: #fff;
+      color: #ff9500;
+    }
+
+    .plus-minus {
+      font-size: clamp(28px, 6vw, 43px) !important;
+    }
+
+    /* BACKSPACE */
+
+    .backspace-icon {
+      width: 39%;
+      height: 30%;
+
+      min-width: 40px;
+      min-height: 28px;
+
+      border: 3px solid currentColor;
+      border-radius: 7px;
+
+      position: relative;
+    }
+
+    .backspace-icon:before {
+      content: "";
+
+      position: absolute;
+
+      left: -15px;
+      top: 50%;
+
+      width: 25px;
+      height: 25px;
+
+      border-left: 3px solid currentColor;
+      border-bottom: 3px solid currentColor;
+
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .backspace-icon:after {
+      content: "×";
+
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      transform: translate(-50%, -54%);
+
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 300;
+    }
+
+    /* PAYMENT */
+
+    .payment {
+      display: none;
+
+      width: 100%;
+      max-width: 520px;
+
+      margin: 38px auto 0;
+
+      padding: 22px;
+
+      border: 1px solid #252525;
+      border-radius: 24px;
+
+      background: #111;
+      color: #fff;
+    }
+
+    .payment.show {
+      display: block;
+    }
+
+    .payment h2 {
+      margin: 0 0 7px;
+      font-size: 22px;
+    }
+
+    .amount {
+      font-size: 31px;
+      font-weight: 800;
+      margin: 5px 0 18px;
+    }
+
+    .bkash {
+      border: 1px solid #303030;
+      border-radius: 18px;
+
+      padding: 16px;
+
+      background: #181818;
+    }
+
+    .badge {
+      display: inline-block;
+
+      background: #f4e6ff;
+      color: #7b2cbf;
+
+      padding: 6px 10px;
+
+      border-radius: 999px;
+
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .number {
+      margin: 12px 0;
+
+      padding: 14px;
+
+      border-radius: 12px;
+
+      background: #242424;
+
+      text-align: center;
+
+      font-size: 22px;
+      font-weight: 800;
+
+      letter-spacing: 1px;
+    }
+
+    .hint {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #aaa;
+    }
+
+    input {
+      width: 100%;
+      height: 50px;
+
+      border: 1px solid #3a3a3a;
+      border-radius: 12px;
+
+      padding: 0 13px;
+
+      font-size: 16px;
+
+      outline: none;
+
+      margin-top: 10px;
+
+      background: #0d0d0d;
+      color: #fff;
+    }
+
+    input::placeholder {
+      color: #777;
+    }
+
+    input:focus {
+      border-color: #7b2cbf;
+    }
+
+    .submit {
+      width: 100%;
+      height: 50px;
+
+      margin-top: 9px;
+
+      border: 0;
+      border-radius: 12px;
+
+      background: #fff;
+      color: #111;
+
+      font-size: 16px;
+      font-weight: 700;
+
+      cursor: pointer;
+    }
+
+    #status {
+      font-size: 13px;
+      margin: 10px 0 0;
+      min-height: 18px;
+    }
+
+    .note {
+      max-width: 520px;
+
+      margin: 13px auto 0;
+
+      color: #666;
+
+      font-size: 11px;
+
+      text-align: center;
+    }
+
+    /* HISTORY */
+
+    .history-panel {
+      display: none;
+
+      max-width: 520px;
+
+      margin: 18px auto 0;
+
+      padding: 16px;
+
+      border: 1px solid #292929;
+      border-radius: 18px;
+
+      background: #111;
+      color: #fff;
+    }
+
+    .history-panel.show {
+      display: block;
+    }
+
+    .history-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      margin-bottom: 10px;
+
+      font-weight: 700;
+    }
+
+    .history-list {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      padding: 10px 0;
+
+      border-bottom: 1px solid #252525;
+
+      color: #bbb;
+
+      font-size: 14px;
+
+      text-align: right;
+    }
+
+    .clear-history {
+      border: 0;
+      background: transparent;
+
+      color: #ff9500;
+
+      cursor: pointer;
+
+      font-size: 13px;
+    }
+
+    @media (max-height: 700px) {
+
+      .display {
+        height: 210px;
+        min-height: 210px;
+      }
+
+      button.key {
+        font-size: 29px;
+      }
+    }
+
+    @media (min-width: 700px) {
+
+      .calculator-wrap {
+        padding-top: 25px;
+      }
+
+      .display {
+        height: 360px;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+<main class="calculator-wrap">
+
+  <section class="calculator">
+
+    <!-- TOP ICONS -->
+
+    <div class="topbar">
+
+      <button
+        class="top-btn"
+        onclick="toggleHistory()"
+        aria-label="History">
+
+        <span class="history-icon"></span>
+
+      </button>
+
+
+      <button
+        class="top-btn"
+        onclick="focusCalculator()"
+        aria-label="Calculator">
+
+        <span class="calc-icon"></span>
+
+      </button>
+
+    </div>
+
+
+    <!-- DISPLAY -->
+
+    <div class="display">
+
+      <div id="expression"></div>
+
+      <div id="display">0</div>
+
+    </div>
+
+
+    <!-- CALCULATOR -->
+
+    <div class="keys">
+
+      <!-- BACKSPACE -->
+
+      <button
+        class="key function-key"
+        onclick="backspace()">
+
+        <span class="backspace-icon"></span>
+
+      </button>
+
+
+      <!-- AC -->
+
+      <button
+        class="key function-key"
+        onclick="clearCalc()">
+
+        AC
+
+      </button>
+
+
+      <!-- PERCENT -->
+
+      <button
+        class="key function-key"
+        onclick="percent()">
+
+        %
+
+      </button>
+
+
+      <!-- DIVIDE -->
+
+      <button
+        id="divideBtn"
+        class="key operator-key"
+        onclick="addOperator('÷')">
+
+        ÷
+
+      </button>
+
+
+      <!-- 7 8 9 -->
+
+      <button
+        class="key number-key"
+        onclick="addNumber('7')">
+
+        7
+
+      </button>
+
+
+      <button
+        class="key number-key"
+        onclick="addNumber('8')">
+
+        8
+
+      </button>
+
+
+      <button
+        class="key number-key"
+        onclick="addNumber('9')">
+
+        9
+
+      </button>
+
+
+      <button
+        id="multiplyBtn"
+        class="key operator-key"
+        onclick="addOperator('×')">
+
+        ×
+
+      </button>
+
+
+      <!-- 4 5 6 -->
+
+      <button
+        class="key number-key"
+        onclick="addNumber('4')">
+
+        4
+
+      </button>
+
+
+      <button
+        class="key number-key"
+        onclick="addNumber('5')">
+
+        5
+
+      </button>
+
+
+      <button
+        class="key number-key"
+        onclick="addNumber('6')">
+
+        6
+
+      </button>
+
+
+      <button
+        id="minusBtn"
+        class="key operator-key"
+        onclick="addOperator('-')">
+
+        −
+
+      </button>
+
+
+      <!-- 1 2 3 -->
+
+      <button
+        class="key number-key"
+        onclick="addNumber('1')">
+
+        1
+
+      </button>
+
+
+      <button
+        class="key number-key"
+        onclick="addNumber('2')">
+
+        2
+
+      </button>
+
+
+      <button
+        class="key number-key"
+        onclick="addNumber('3')">
+
+        3
+
+      </button>
+
+
+      <button
+        id="plusBtn"
+        class="key operator-key"
+        onclick="addOperator('+')">
+
+        +
+
+      </button>
+
+
+      <!-- BOTTOM -->
+
+      <button
+        class="key number-key plus-minus"
+        onclick="toggleSign()">
+
+        +/−
+
+      </button>
+
+
+      <button
+        class="key number-key"
+        onclick="addNumber('0')">
+
+        0
+
+      </button>
+
+
+      <button
+        class="key number-key"
+        onclick="addNumber('.')">
+
+        .
+
+      </button>
+
+
+      <button
+        id="equalBtn"
+        class="key operator-key"
+        onclick="calculate()">
+
+        =
+
+      </button>
+
+    </div>
+
+
+    <!-- HISTORY -->
+
+    <section
+      id="historyPanel"
+      class="history-panel">
+
+      <div class="history-title">
+
+        <span>Calculation History</span>
+
+        <button
+          class="clear-history"
+          onclick="clearHistory()">
+
+          Clear
+
+        </button>
+
+      </div>
+
+      <div
+        id="historyList"
+        class="history-list">
+      </div>
+
+    </section>
+
+
+    <!-- PAYMENT -->
+
+    <section
+      id="payment"
+      class="payment">
+
+      <h2>Payment Required</h2>
+
+      <div
+        class="amount"
+        id="amount">
+
+        ৳ 0
+
+      </div>
+
+
+      <div class="bkash">
+
+        <span class="badge">
+
+          bKash • Send Money
+
+        </span>
+
+
+        <p class="hint">
+
+          Please send the exact amount to the bKash number below.
+
+        </p>
+
+
+        <div class="number">
+
+          01882333181
+
+        </div>
+
+
+        <p class="hint">
+
+          Send Money করার পর payment-এর Transaction ID নিচে দিন।
+
+        </p>
+
+
+        <input
+          id="trx"
+          type="text"
+          maxlength="40"
+          placeholder="Enter your TRX / Transaction ID"
+          autocomplete="off"
+        >
+
+
+        <button
+          class="submit"
+          onclick="submitTrx()">
+
+          Submit TRX
+
+        </button>
+
+
+        <div id="status"></div>
+
+      </div>
+
+    </section>
+
+
+    <div class="note">
+
+      Payment Method: bKash Send Money
+
+    </div>
+
+  </section>
+
+</main>
+
+
+<script>
+
+let expression = "";
+
+let justCalculated = false;
+
+let history =
+  JSON.parse(
+    localStorage.getItem("rimonCalcHistory") || "[]"
+  );
+
+
+const display =
+  document.getElementById("display");
+
+const expressionBox =
+  document.getElementById("expression");
+
+
+/* DISPLAY */
+
+function render() {
+
+  display.textContent =
+    expression || "0";
+
+}
+
+
+/* NUMBERS */
+
+function addNumber(value) {
+
+  if (justCalculated) {
+
+    expression = "";
+
+    expressionBox.textContent = "";
+
+    justCalculated = false;
+
+  }
+
+
+  if (value === ".") {
+
+    const currentNumber =
+      expression.split(/[+×÷-]/).pop();
+
+
+    if (currentNumber.includes(".")) {
+      return;
+    }
+
+
+    if (!currentNumber) {
+      expression += "0";
+    }
+
+  }
+
+
+  expression += value;
+
+  render();
+
+}
+
+
+/* OPERATORS */
+
+function addOperator(operator) {
+
+  justCalculated = false;
+
+
+  if (!expression) {
+    return;
+  }
+
+
+  if (/[+×÷-]$/.test(expression)) {
+
+    expression =
+      expression.slice(0, -1) +
+      operator;
+
+  }
+
+  else {
+
+    expression += operator;
+
+  }
+
+
+  render();
+
+  setActiveOperator(operator);
+
+}
+
+
+/* OPERATOR EFFECT */
+
+function setActiveOperator(operator) {
+
+  document
+    .querySelectorAll(".operator-key")
+    .forEach(btn => {
+
+      btn.classList.remove("active");
+
+    });
+
+
+  const map = {
+
+    "÷": "divideBtn",
+
+    "×": "multiplyBtn",
+
+    "-": "minusBtn",
+
+    "+": "plusBtn"
+
+  };
+
+
+  if (map[operator]) {
+
+    const button =
+      document.getElementById(
+        map[operator]
+      );
+
+
+    button.classList.add("active");
+
+
+    setTimeout(() => {
+
+      button.classList.remove("active");
+
+    }, 120);
+
+  }
+
+}
+
+
+/* BACKSPACE */
+
+function backspace() {
+
+  if (justCalculated) {
+
+    clearCalc();
+
+    return;
+
+  }
+
+
+  expression =
+    expression.slice(0, -1);
+
+
+  render();
+
+}
+
+
+/* CLEAR */
+
+function clearCalc() {
+
+  expression = "";
+
+  justCalculated = false;
+
+
+  expressionBox.textContent = "";
+
+  display.textContent = "0";
+
+
+  document
+    .getElementById("payment")
+    .classList.remove("show");
+
+
+  document
+    .getElementById("status")
+    .textContent = "";
+
+
+  document
+    .getElementById("trx")
+    .value = "";
+
+
+  document
+    .querySelectorAll(".operator-key")
+    .forEach(btn => {
+
+      btn.classList.remove("active");
+
+    });
+
+}
+
+
+/* PERCENT */
+
+function percent() {
+
+  if (!expression) {
+    return;
+  }
+
+
+  try {
+
+    const match =
+      expression.match(
+        /(-?\d*\.?\d+)$/
+      );
+
+
+    if (!match) {
+      return;
+    }
+
+
+    const number =
+      parseFloat(match[1]);
+
+
+    const result =
+      number / 100;
+
+
+    expression =
+      expression.slice(
+        0,
+        -match[1].length
+      ) +
+      String(result);
+
+
+    render();
+
+  }
+
+  catch (e) {}
+
+}
+
+
+/* PLUS / MINUS */
+
+function toggleSign() {
+
+  if (!expression) {
+    return;
+  }
+
+
+  const match =
+    expression.match(
+      /(\d*\.?\d+)$/
+    );
+
+
+  if (!match) {
+    return;
+  }
+
+
+  const number =
+    match[1];
+
+
+  const start =
+    expression.slice(
+      0,
+      -number.length
+    );
+
+
+  if (
+    start.endsWith("-") &&
+    (
+      start.length === 1 ||
+      /[+×÷]$/.test(
+        start.slice(0, -1)
+      )
+    )
+  ) {
+
+    expression =
+      start.slice(0, -1) +
+      number;
+
+  }
+
+  else {
+
+    expression =
+      start +
+      "(-" +
+      number +
+      ")";
+
+  }
+
+
+  render();
+
+}
+
+
+/* CALCULATE */
+
+function calculate() {
+
+  if (!expression) {
+    return;
+  }
+
+
+  if (/[+×÷-]$/.test(expression)) {
+
+    expression =
+      expression.slice(0, -1);
+
+  }
+
+
+  if (!expression) {
+
+    render();
+
+    return;
+
+  }
+
+
+  const raw =
+    expression
+      .replaceAll("×", "*")
+      .replaceAll("÷", "/");
+
+
+  if (!/^[0-9+*/(). -]+$/.test(raw)) {
+
+    display.textContent = "Error";
+
+    return;
+
+  }
+
+
+  try {
+
+    const result =
+      Function(
+        '"use strict"; return (' +
+        raw +
+        ')'
+      )();
+
+
+    if (!Number.isFinite(result)) {
+      throw new Error();
+    }
+
+
+    const rounded =
+      Math.round(
+        (result + Number.EPSILON) *
+        100000000
+      ) /
+      100000000;
+
+
+    const oldExpression =
+      expression;
+
+
+    expressionBox.textContent =
+      oldExpression + " =";
+
+
+    display.textContent =
+      formatNumber(rounded);
+
+
+    document
+      .getElementById("amount")
+      .textContent =
+      "৳ " +
+      rounded.toLocaleString("en-BD");
+
+
+    document
+      .getElementById("payment")
+      .classList.add("show");
+
+
+    addHistory(
+      oldExpression,
+      rounded
+    );
+
+
+    expression =
+      String(rounded);
+
+
+    justCalculated = true;
+
+
+    setTimeout(() => {
+
+      document
+        .getElementById("payment")
+        .scrollIntoView({
+
+          behavior: "smooth",
+
+          block: "nearest"
+
+        });
+
+    }, 50);
+
+  }
+
+  catch (e) {
+
+    display.textContent =
+      "Error";
+
+    justCalculated = true;
+
+  }
+
+}
+
+
+/* NUMBER FORMAT */
+
+function formatNumber(number) {
+
+  return Number(number)
+    .toLocaleString(
+      "en-US",
+      {
+        maximumFractionDigits: 8
+      }
+    );
+
+}
+
+
+/* SUBMIT TRX */
+
+function submitTrx() {
+
+  const trx =
+    document
+      .getElementById("trx")
+      .value
+      .trim();
+
+
+  const status =
+    document
+      .getElementById("status");
+
+
+  if (!trx) {
+
+    status.style.color =
+      "#ff6b6b";
+
+
+    status.textContent =
+      "Please enter your Transaction ID.";
+
+
+    return;
+
+  }
+
+
+  status.style.color =
+    "#57d68d";
+
+
+  status.textContent =
+    "Transaction ID submitted: " +
+    trx;
+
+}
+
+
+/* HISTORY */
+
+function addHistory(calc, result) {
+
+  history.unshift({
+
+    calc: calc,
+
+    result: result,
+
+    time: new Date()
+      .toLocaleString()
+
+  });
+
+
+  history =
+    history.slice(0, 30);
+
+
+  localStorage.setItem(
+    "rimonCalcHistory",
+    JSON.stringify(history)
+  );
+
+
+  renderHistory();
+
+}
+
+
+/* SHOW HISTORY */
+
+function renderHistory() {
+
+  const list =
+    document.getElementById(
+      "historyList"
+    );
+
+
+  if (!history.length) {
+
+    list.innerHTML =
+      '<div class="history-item">' +
+      'No calculation history' +
+      '</div>';
+
+    return;
+
+  }
+
+
+  list.innerHTML =
+    history
+      .map(item => `
+
+        <div class="history-item">
+
+          ${escapeHTML(item.calc)}
+          =
+          ${formatNumber(item.result)}
+
+        </div>
+
+      `)
+      .join("");
+
+}
+
+
+/* SECURITY */
+
+function escapeHTML(value) {
+
+  return String(value)
+
+    .replaceAll("&", "&amp;")
+
+    .replaceAll("<", "&lt;")
+
+    .replaceAll(">", "&gt;")
+
+    .replaceAll('"', "&quot;")
+
+    .replaceAll("'", "&#039;");
+
+}
+
+
+/* HISTORY BUTTON */
+
+function toggleHistory() {
+
+  const panel =
+    document.getElementById(
+      "historyPanel"
+    );
+
+
+  panel.classList.toggle("show");
+
+
+  renderHistory();
+
+}
+
+
+/* CLEAR HISTORY */
+
+function clearHistory() {
+
+  history = [];
+
+  localStorage.removeItem(
+    "rimonCalcHistory"
+  );
+
+
+  renderHistory();
+
+}
+
+
+/* CALCULATOR BUTTON */
+
+function focusCalculator() {
+
+  window.scrollTo({
+
+    top: 0,
+
+    behavior: "smooth"
+
+  });
+
+}
+
+
+/* KEYBOARD */
+
+document.addEventListener(
+  "keydown",
+  function(e) {
+
+    if (
+      e.target.tagName === "INPUT"
+    ) {
+      return;
+    }
+
+
+    if (/^[0-9]$/.test(e.key)) {
+
+      addNumber(e.key);
+
+    }
+
+    else if (e.key === ".") {
+
+      addNumber(".");
+
+    }
+
+    else if (e.key === "*") {
+
+      addOperator("×");
+
+    }
+
+    else if (e.key === "/") {
+
+      e.preventDefault();
+
+      addOperator("÷");
+
+    }
+
+    else if (e.key === "+") {
+
+      addOperator("+");
+
+    }
+
+    else if (e.key === "-") {
+
+      addOperator("-");
+
+    }
+
+    else if (e.key === "%") {
+
+      percent();
+
+    }
+
+    else if (
+      e.key === "Enter" ||
+      e.key === "="
+    ) {
+
+      calculate();
+
+    }
+
+    else if (
+      e.key === "Backspace"
+    ) {
+
+      backspace();
+
+    }
+
+    else if (
+      e.key === "Escape"
+    ) {
+
+      clearCalc();
+
+    }
+
+  }
+);
+
+
+/* START */
+
+renderHistory();
+
+</script>
+
+</body>
+</html>
